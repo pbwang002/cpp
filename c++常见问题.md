@@ -92,3 +92,7 @@
             - 引用捕获：private 成员 的类型是捕获变量的引用类型
     - 参考文档
         - https://ld246.com/article/1545790136502
+
+- C++11中的lambda，std::function以及std:bind
+    - 参考文档：https://paul.pub/cpp-lambda-function-bind/
+    
