@@ -30,3 +30,65 @@
     - 基类加虚析构函数，会自动触发，先析构派生，后析构当前，防止内存泄漏
     - 删除对象时，派生类的析构和基类的析构构成多态，所以先调用派生类的析构；析构函数
     - 参考：https://www.zhihu.com/question/268022905
+
+- lambda实现原理
+    - lambda结构
+        - 捕获列表：捕获外部变量，捕获的变量可以在函数体中使用，可以省略，即不捕获外部变量。
+        - 形参列表：和普通函数的形参列表一样。可省略，即无参数列表
+        - mutable：mutable 关键字，如果有，则表示在函数体中可以修改捕获变量，根据具体需求决定是否需要省略。
+        - 异常列表：noexcept / throw(...),和普通函数的异常列表一样，可省略，即代表可能抛出任何类型的异常。
+        - 返回类型：和函数的返回类型一样。可省略，如省略，编译器将自动推导返回类型。
+        - 函数体：代码实现。可省略，但是没意义。
+    - lambda执行流程
+        - 创建 lambda 类，实现构造函数，使用 lambda 表达式的函数体重载 operator()（所以 lambda 表达式 也叫匿名函数对象）
+        - 创建 lambda 对象
+        - 通过对象调用 operator()
+        - lambda 表达式翻译后的代码，类名修改为lambda_XXX
+            - 翻译前
+            ```c++
+                void LambdaDemo()
+                {
+                    int a = 1;
+                    int b = 2;
+                    auto lambda = [a, b](int x, int y)mutable throw() -> bool
+                    {
+                        return a + b > x + y;
+                    };
+                    bool ret = lambda(3, 4);
+                }
+            ```
+            - 翻译后
+            ```c++
+                class lambda_xxxx
+                {
+                private:
+                    int a;
+                    int b;
+                public:
+                    lambda_xxxx(int _a, int _b) :a(_a), b(_b)
+                    {
+                    }
+                    bool operator()(int x, int y) throw()
+                    {
+                        return a + b > x + y;
+                    }
+                };
+                void LambdaDemo()
+                {
+                    int a = 1;
+                    int b = 2;
+                    lambda_xxxx lambda = lambda_xxxx(a, b);
+                    bool ret = lambda.operator()(3, 4);
+                }
+            ```
+    - lambda实现原理
+        - lambda 表达式中的捕获列表，对应 lambda_xxxx 类的 private 成员
+        - lambda 表达式中的形参列表，对应 lambda_xxxx 类成员函数 operator() 的形参列表
+        - lambda 表达式中的 mutable，对应 lambda_xxxx 类成员函数 operator() 的常属性 const，即是否是 常成员函数
+        - lambda 表达式中的返回类型，对应 lambda_xxxx 类成员函数 operator() 的返回类型
+        - lambda 表达式中的函数体，对应 lambda_xxxx 类成员函数 operator() 的函数体
+        - lambda 表达 捕获列表的捕获方式，也影响 对应 lambda_xxxx 类的 private 成员 的类型
+            - 值捕获：private 成员 的类型与捕获变量的类型一致
+            - 引用捕获：private 成员 的类型是捕获变量的引用类型
+    - 参考文档
+        - https://ld246.com/article/1545790136502
